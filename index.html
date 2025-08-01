@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Valoran</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <h1 class="logo">VALORAN</h1>
+  </header>
+
+  <!-- Pogovor -->
+  <main>
+    <div class="chat-container" id="chat-box"></div>
+  </main>
+
+  <!-- Input -->
+  <form id="chat-form" class="chat-form">
+    <input
+      id="user-input"
+      type="text"
+      placeholder="Vprašaj Valorana..."
+      autocomplete="off"
+    />
+    <button type="submit" id="submit-btn">Pošlji</button>
+  </form>
+
+  <!-- Scroll gumb -->
+  <button id="scroll-btn" onclick="scrollToBottom()">↓</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
