@@ -1,46 +1,67 @@
+const chatBox = document.getElementById("chat-box");
+const chatForm = document.getElementById("chat-form");
+const userInput = document.getElementById("user-input");
+const scrollBtn = document.getElementById("scroll-btn");
+
 let messages = [];
 
-document.getElementById("chat-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const input = document.getElementById("user-input");
-  const userMessage = input.value.trim();
-  if (!userMessage) return;
-
-  addMessage("user", userMessage);
-  input.value = "";
-
-  try {
-    const response = await fetch("/.netlify/functions/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [...messages, { role: "user", content: userMessage }] })
-    });
-
-    const reply = await response.text();
-    addMessage("bot", reply);
-
-    messages.push({ role: "user", content: userMessage });
-    messages.push({ role: "assistant", content: reply });
-
-  } catch (error) {
-    addMessage("bot", "⚠️ Napaka pri povezavi.");
-    console.error(error);
-  }
-});
-
-function addMessage(role, content) {
-  const chatBox = document.getElementById("chat-box");
+function addMessage(content, sender) {
   const msg = document.createElement("div");
-  msg.className = role === "user" ? "user-message" : "bot-message";
+  msg.className = sender === "user" ? "user-message" : "bot-message";
   msg.textContent = content;
   chatBox.appendChild(msg);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function scrollToBottom() {
-  document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
+function showTyping() {
+  const typing = document.createElement("div");
+  typing.id = "typing-indicator";
+  typing.className = "bot-message";
+  typing.textContent = "Valoran piše...";
+  chatBox.appendChild(typing);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
+
+function removeTyping() {
+  const typing = document.getElementById("typing-indicator");
+  if (typing) typing.remove();
+}
+
+function scrollToBottom() {
+  chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: "smooth" });
+}
+
+chatBox.addEventListener("scroll", () => {
+  scrollBtn.style.display = chatBox.scrollTop < chatBox.scrollHeight - 300 ? "block" : "none";
+});
+
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = userInput.value.trim();
+  if (!input) return;
+
+  addMessage(input, "user");
+  userInput.value = "";
+  messages.push({ role: "user", content: input });
+
+  showTyping();
+
+  try {
+    const res = await fetch("/.netlify/functions/chat", {
+      method: "POST",
+      body: JSON.stringify({ messages }),
+    });
+    const reply = await res.text();
+    removeTyping();
+    addMessage(reply, "bot");
+    messages.push({ role: "assistant", content: reply });
+  } catch (err) {
+    removeTyping();
+    addMessage("Napaka pri komunikaciji z Valoranom.", "bot");
+    console.error(err);
+  }
+});
+
 
 
 
