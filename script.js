@@ -5,15 +5,22 @@ const scrollBtn = document.getElementById("scroll-btn");
 
 let messages = [];
 
-function addMessage(content, sender) {
+function addMessage(content, sender, typing = false) {
   const msg = document.createElement("div");
   msg.className = sender === "user" ? "user-message" : "bot-message";
-  msg.textContent = content;
-  chatBox.appendChild(msg);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  if (typing) {
+    const span = document.createElement("span");
+    msg.appendChild(span);
+    chatBox.appendChild(msg);
+    return span;
+  } else {
+    msg.textContent = content;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
 }
 
-function showTyping() {
+function showTypingIndicator() {
   const typing = document.createElement("div");
   typing.id = "typing-indicator";
   typing.className = "bot-message";
@@ -22,7 +29,7 @@ function showTyping() {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function removeTyping() {
+function removeTypingIndicator() {
   const typing = document.getElementById("typing-indicator");
   if (typing) typing.remove();
 }
@@ -44,19 +51,35 @@ chatForm.addEventListener("submit", async (e) => {
   userInput.value = "";
   messages.push({ role: "user", content: input });
 
-  showTyping();
+  showTypingIndicator();
 
   try {
     const res = await fetch("/.netlify/functions/chat", {
       method: "POST",
       body: JSON.stringify({ messages }),
     });
+
     const reply = await res.text();
-    removeTyping();
-    addMessage(reply, "bot");
-    messages.push({ role: "assistant", content: reply });
+    removeTypingIndicator();
+
+    const span = addMessage("", "bot", true);
+    let words = reply.split(" ");
+    let i = 0;
+
+    function typeNextWord() {
+      if (i < words.length) {
+        span.textContent += (i > 0 ? " " : "") + words[i];
+        chatBox.scrollTop = chatBox.scrollHeight;
+        i++;
+        setTimeout(typeNextWord, 80); // hitrost
+      } else {
+        messages.push({ role: "assistant", content: reply });
+      }
+    }
+
+    typeNextWord();
   } catch (err) {
-    removeTyping();
+    removeTypingIndicator();
     addMessage("Napaka pri komunikaciji z Valoranom.", "bot");
     console.error(err);
   }
